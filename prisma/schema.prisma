@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  username String @unique
+  password String
+
+  @@index([username])
+}
+
+model Customer {
+  id            Int            @id @default(autoincrement())
+  name          String
+  nid           String
+  phone         String
+  address       String
+  photo         String
+  notes         String
+  prescriptions Prescription[]
+
+  @@index([name, nid, phone])
+}
+
+model Prescription {
+  customer    Customer @relation(fields: [customerId], references: [id])
+  customerId  Int
+  id          Int      @id @default(autoincrement())
+  notes       String
+  renewalDate DateTime
+  items       Item[]
+}
+
+model Item {
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  prescriptionId Int
+  id             Int          @id @default(autoincrement())
+  description    String
+  expiry         DateTime
+  quantity       Int
+  rate           Float
+}

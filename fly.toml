@@ -1,0 +1,53 @@
+# fly.toml file generated for cenph on 2023-03-23T06:56:15+05:00
+
+app = "cenph"
+kill_signal = "SIGINT"
+kill_timeout = 5
+primary_region = "sin"
+processes = []
+
+[env]
+  DATABASE_URL = "file:/data/sqlite.db"
+  PORT = "8080"
+
+[experimental]
+  cmd = "start_with_migrations.sh"
+  entrypoint = "sh"
+
+[[mounts]]
+  destination = "/data"
+  source = "data"
+
+[[services]]
+  internal_port = 8080
+  processes = ["app"]
+  protocol = "tcp"
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "60s"
+    interval = "5s"
+    restart_limit = 0
+    timeout = "2s"
+
+  [[services.http_checks]]
+    grace_period = "60s"
+    interval = "10s"
+    method = "get"
+    path = "/"
+    protocol = "http"
+    timeout = "5s"
+    tls_skip_verify = false
+    [services.http_checks.headers]

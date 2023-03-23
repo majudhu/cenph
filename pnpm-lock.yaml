@@ -32,6 +32,7 @@ dependencies:
   flowbite: 1.6.3
   flowbite-react: 0.4.2_mol5tm3ythzzweugirxwt5yj3q
   isbot: 3.6.6
+  prisma: 4.11.0
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-icons: 4.8.0_react@18.2.0
@@ -43,7 +44,6 @@ devDependencies:
   '@types/react': 18.0.28
   '@types/react-dom': 18.0.11
   eslint: 8.35.0
-  prisma: 4.11.0
   tailwindcss: 3.2.7_ts-node@10.9.1
   ts-node: 10.9.1_alpjt73dvgv6kni625hu7f2l4m
   typescript: 4.9.5
@@ -1886,6 +1886,7 @@ packages:
   /@prisma/engines/4.11.0:
     resolution: {integrity: sha512-0AEBi2HXGV02cf6ASsBPhfsVIbVSDC9nbQed4iiY5eHttW9ZtMxHThuKZE1pnESbr8HRdgmFSa/Kn4OSNYuibg==}
     requiresBuild: true
+    dev: false
 
   /@remix-run/dev/1.14.0_y7qhcacfsagmsdycofptrlgjh4:
     resolution: {integrity: sha512-EG9kG/rGSRucer+g5PJQ8lSMLtJNVVCpxVMzHOciGPRXjPK3pg5acOuOksJGvdiqgFX9UO5itielQZ81ZBy6jA==}
@@ -6246,6 +6247,7 @@ packages:
     requiresBuild: true
     dependencies:
       '@prisma/engines': 4.11.0
+    dev: false
 
   /process-nextick-args/2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}

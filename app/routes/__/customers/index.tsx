@@ -6,9 +6,9 @@ import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
 import type { Customer } from "@prisma/client";
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 
-export async function loader({ request }: ActionArgs) {
+export async function loader({ request }: LoaderArgs) {
   await authGuard(request);
   const customers = await db.customer.findMany({});
   return json({ customers });

@@ -1,14 +1,15 @@
 import { json, redirect } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import { Button, Label, Textarea, TextInput } from "flowbite-react";
+import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Button, Label, Table, Textarea, TextInput } from "flowbite-react";
 import AddPrescriptionButtonDialog from "~/components/add-prescription-dialog";
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
 import type { Customer } from "@prisma/client";
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import { useHydrated } from "~/components/use-hydrated";
 
-export async function loader({ request, params }: ActionArgs) {
+export async function loader({ request, params }: LoaderArgs) {
   await authGuard(request);
 
   try {
@@ -23,6 +24,8 @@ export async function loader({ request, params }: ActionArgs) {
 
 export default function CustomerDetails() {
   const { customer } = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+  const hydrated = useHydrated();
 
   return (
     <>
@@ -114,8 +117,36 @@ export default function CustomerDetails() {
         </Form>
       </div>
 
-      <h1 className="text-xl font-bold my-4">Prescriptions</h1>
-      <AddPrescriptionButtonDialog customer={customer} />
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold my-4">Prescriptions</h1>
+        <AddPrescriptionButtonDialog customer={customer} />
+      </div>
+
+      <div className="pt-8 pr-8">
+        <Table hoverable>
+          <Table.Head>
+            <Table.HeadCell>Id</Table.HeadCell>
+            <Table.HeadCell>Renewal</Table.HeadCell>
+            <Table.HeadCell>Notes</Table.HeadCell>
+          </Table.Head>
+          <Table.Body className="divide-y">
+            {customer.prescriptions.map((prescription) => (
+              <Table.Row
+                key={prescription.id}
+                role="button"
+                onClick={() => navigate(`/prescriptions/${prescription.id}`)}
+              >
+                <Table.Cell>{prescription.id}</Table.Cell>
+                <Table.Cell>
+                  {hydrated &&
+                    new Date(prescription.renewalDate).toLocaleDateString()}
+                </Table.Cell>
+                <Table.Cell>{prescription.notes}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      </div>
     </>
   );
 }

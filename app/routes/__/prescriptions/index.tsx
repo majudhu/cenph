@@ -4,11 +4,10 @@ import { Table } from "flowbite-react";
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
-// import AddPrescriptionButtonDialog from "~/components/add-prescription-dialog";
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { useHydrated } from "~/components/use-hydrated";
 
-export async function loader({ request }: ActionArgs) {
+export async function loader({ request }: LoaderArgs) {
   await authGuard(request);
   const prescriptions = await db.prescription.findMany({
     include: { customer: true },

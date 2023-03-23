@@ -12,11 +12,11 @@ import {
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { Fragment, useEffect, useState } from "react";
 import AddPrescriptionButtonDialog from "~/components/add-prescription-dialog";
 
-export async function loader({ request, params }: ActionArgs) {
+export async function loader({ request, params }: LoaderArgs) {
   await authGuard(request);
 
   try {

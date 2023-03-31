@@ -124,23 +124,20 @@ export default function Customers() {
       </table>
 
       {count > PER_PAGE && (
-        <Form
+        <div
           className="btn-group mt-8"
-          onSubmit={() => document.querySelector("table")?.scrollIntoView()}
+          onClick={() => document.querySelector("table")?.scrollIntoView()}
         >
-          {searched && <input type="hidden" name="search" value={searched} />}
           {Array.from({ length: Math.ceil(count / PER_PAGE) }, (_, i) => (
-            <button
+            <Link
               key={i}
               className={`btn ${i + 1 == page ? "btn-active" : ""}`}
-              type="submit"
-              name="page"
-              value={i + 1}
+              to={`?page=${i + 1}&search=${searched || ""}`}
             >
               {i + 1}
-            </button>
+            </Link>
           ))}
-        </Form>
+        </div>
       )}
     </>
   );

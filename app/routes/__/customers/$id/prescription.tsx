@@ -7,29 +7,27 @@ import {
 } from "@heroicons/react/20/solid";
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import {
-  Form,
-  useFetcher,
-  useLoaderData,
-  useNavigation,
-} from "@remix-run/react";
+import { Form, useLoaderData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
-import type { loader as customersLoader } from "~/routes/__/customers";
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
 export async function loader({ request, params }: LoaderArgs) {
   await authGuard(request);
-  const customer = await db.customer.findFirst();
-  return json({ customer });
+
+  try {
+    const customer = await db.customer.findFirstOrThrow({
+      where: { id: +params.id! },
+      include: { prescriptions: true },
+    });
+    return json({ customer });
+  } catch (ex) {}
+  throw redirect("/customers");
 }
 
 export default function NewPrescription() {
   const { state } = useNavigation();
   const { customer } = useLoaderData<typeof loader>();
-  const searchCustomers = useFetcher<typeof customersLoader>();
-
-  const [selectedCustomer, setSelectedCustomer] = useState(customer);
 
   const [renewalDate, setrenewalDate] = useState("");
 
@@ -47,49 +45,30 @@ export default function NewPrescription() {
           <h2 className="mb-1 text-sm font-medium text-gray-900 dark:text-gray-300">
             Customer
           </h2>
-          {/* <Dropdown label="Select customer" className="w-full" size="sm">
-              <Dropdown.Header>
-                <input className="input"
-                  placeholder="Search customer"
-                  className="mt-1 mb-3"
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                />
-              </Dropdown.Header>
-              {searchCustomers.data?.customers.map((customer) => (
-                <Dropdown.Item
-                  key={customer.id}
-                  onClick={() => setSelectedCustomer(customer)}
-                >
-                  {customer.name}
-                </Dropdown.Item>
-              ))}
-            </Dropdown> */}
         </div>
-        {selectedCustomer && (
-          <div className="flex gap-4 text-sm md:text-base card flex-row bg-base-100 p-2 font-medium mb-3 hover:bg-base-300">
-            <div className="flex-1">
-              <p className="mb-1">
-                <UserIcon className="inline mr-1 align-[-1px] w-4" />
-                {selectedCustomer.name}
-              </p>
-              <p>
-                <HomeIcon className="inline mr-1 align-[-1px] w-4" />
-                {selectedCustomer.address}
-              </p>
-            </div>
-            <div className="flex-none w-fit">
-              <p className="mb-1">
-                <PhoneIcon className="inline mr-1 align-[-1px] w-4" />
-                {selectedCustomer.phone}
-              </p>
-              <p>
-                <IdentificationIcon className="inline mr-1 align-[-1px] w-4" />
-                {selectedCustomer.nid}
-              </p>
-            </div>
+
+        <div className="flex gap-4 text-sm md:text-base card flex-row bg-base-100 p-2 font-medium mb-3 hover:bg-base-300">
+          <div className="flex-1">
+            <p className="mb-1">
+              <UserIcon className="inline mr-1 align-[-1px] w-4" />
+              {customer.name}
+            </p>
+            <p>
+              <HomeIcon className="inline mr-1 align-[-1px] w-4" />
+              {customer.address}
+            </p>
           </div>
-        )}
+          <div className="flex-none w-fit">
+            <p className="mb-1">
+              <PhoneIcon className="inline mr-1 align-[-1px] w-4" />
+              {customer.phone}
+            </p>
+            <p>
+              <IdentificationIcon className="inline mr-1 align-[-1px] w-4" />
+              {customer.nid}
+            </p>
+          </div>
+        </div>
 
         <label className="label" htmlFor="notes">
           Notes
@@ -126,10 +105,8 @@ export default function NewPrescription() {
         <div className="flex gap-4 py-4 items-center mt-8">
           <button
             type="submit"
-            name="customerId"
-            className="btn btn-primary"
-            value={selectedCustomer?.id}
-            disabled={!selectedCustomer || !renewalDate || state != "idle"}
+            className="btn btn-primary w-64"
+            disabled={!renewalDate || state != "idle"}
           >
             {state != "idle" ? (
               <ArrowPathIcon className="mx-auto animate-spin w-5" />
@@ -144,13 +121,13 @@ export default function NewPrescription() {
   );
 }
 
-export async function action({ request }: ActionArgs) {
+export async function action({ request, params }: ActionArgs) {
   await authGuard(request);
   try {
     const formData = await request.formData();
     const { id } = await db.prescription.create({
       data: {
-        customerId: +formData.get("customerId")!,
+        customerId: +params.id!,
         notes: formData.get("notes") as string,
         renewalDate: new Date(formData.get("renewalDate") as string),
       },

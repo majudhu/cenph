@@ -16,6 +16,7 @@ import {
   PhoneIcon,
 } from "@heroicons/react/20/solid";
 import type { LoaderArgs } from "@remix-run/node";
+import { sortBy } from "lodash";
 
 const PER_PAGE = 15;
 
@@ -51,15 +52,11 @@ export default function Prescriptions() {
   const { prescriptions, count } = useLoaderData<typeof loader>();
 
   const sortDesc = searchParams.get("sort") === "desc";
+  const page = +(searchParams.get("page") as string) || 1;
 
   return (
     <>
-      <h1 className="flex flex-wrap justify-between">
-        Prescriptions
-        <Link to="new" className="btn btn-primary">
-          Add Prescription
-        </Link>
-      </h1>
+      <h1>Prescriptions</h1>
 
       <Form className="flex items-center gap-4 mb-8 flex-wrap">
         <label className="label" htmlFor="sortBy">
@@ -140,6 +137,25 @@ export default function Prescriptions() {
           ))}
         </tbody>
       </table>
+
+      {count > PER_PAGE && (
+        <div
+          className="btn-group mt-8"
+          onClick={() => document.querySelector("table")?.scrollIntoView()}
+        >
+          {Array.from({ length: Math.ceil(count / PER_PAGE) }, (_, i) => (
+            <Link
+              key={i}
+              className={`btn ${i + 1 == page ? "btn-active" : ""}`}
+              to={`?page=${i + 1}&sortBy=${
+                searchParams.get("sortBy") ?? ""
+              }&sort=${sortDesc ? "desc" : "asc"}`}
+            >
+              {i + 1}
+            </Link>
+          ))}
+        </div>
+      )}
     </>
   );
 }

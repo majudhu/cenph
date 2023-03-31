@@ -36,10 +36,7 @@ export default function CustomerDetails() {
     <>
       <h1 className="flex flex-wrap gap-y-4">
         Customer
-        <Link
-          to={`/prescriptions/new?customer=${customer.id}`}
-          className="ml-auto btn btn-primary"
-        >
+        <Link to="prescription" className="ml-auto btn btn-primary">
           Add Prescription
         </Link>
       </h1>

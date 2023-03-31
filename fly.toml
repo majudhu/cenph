@@ -1,4 +1,4 @@
-# fly.toml file generated for cenph on 2023-03-23T06:56:15+05:00
+# fly.toml file generated for cenph on 2023-04-01T03:19:30+05:00
 
 app = "cenph"
 kill_signal = "SIGINT"
@@ -27,6 +27,16 @@ processes = []
     soft_limit = 20
     type = "connections"
 
+  [[services.http_checks]]
+    grace_period = "60s"
+    interval = "10s"
+    method = "get"
+    path = "/"
+    protocol = "http"
+    timeout = "5s"
+    tls_skip_verify = false
+    [services.http_checks.headers]
+
   [[services.ports]]
     force_https = true
     handlers = ["http"]
@@ -41,13 +51,3 @@ processes = []
     interval = "5s"
     restart_limit = 0
     timeout = "2s"
-
-  [[services.http_checks]]
-    grace_period = "60s"
-    interval = "10s"
-    method = "get"
-    path = "/"
-    protocol = "http"
-    timeout = "5s"
-    tls_skip_verify = false
-    [services.http_checks.headers]

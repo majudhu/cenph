@@ -24,17 +24,6 @@ CREATE TABLE "Prescription" (
     CONSTRAINT "Prescription_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- CreateTable
-CREATE TABLE "Item" (
-    "prescriptionId" INTEGER NOT NULL,
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "description" TEXT NOT NULL,
-    "expiry" DATETIME NOT NULL,
-    "quantity" INTEGER NOT NULL,
-    "rate" REAL NOT NULL,
-    CONSTRAINT "Item_prescriptionId_fkey" FOREIGN KEY ("prescriptionId") REFERENCES "Prescription" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
@@ -43,3 +32,6 @@ CREATE INDEX "User_username_idx" ON "User"("username");
 
 -- CreateIndex
 CREATE INDEX "Customer_name_nid_phone_idx" ON "Customer"("name", "nid", "phone");
+
+-- CreateIndex
+CREATE INDEX "Prescription_customerId_renewalDate_idx" ON "Prescription"("customerId", "renewalDate");

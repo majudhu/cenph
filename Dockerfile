@@ -4,7 +4,7 @@ FROM node:lts-alpine as base
 
 # Install openssl for Prisma
 RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add openssl libc6-compat
-RUN --mount=type=cache,id=node,target=/root/.node corepack enable && corepack prepare pnpm@latest --activate
+RUN --mount=type=cache,id=node,target=/root/.node corepack enable && corepack prepare pnpm@7.25.0 --activate
 
 ENV NODE_ENV production
 ENV CI 1

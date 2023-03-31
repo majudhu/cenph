@@ -1,13 +1,18 @@
 import { json, redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigate } from "@remix-run/react";
-import { Button, Label, Table, Textarea, TextInput } from "flowbite-react";
-import AddPrescriptionButtonDialog from "~/components/add-prescription-dialog";
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+} from "@remix-run/react";
+
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
+import { ArrowPathIcon } from "@heroicons/react/20/solid";
 import type { Customer } from "@prisma/client";
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { useHydrated } from "~/components/use-hydrated";
 
 export async function loader({ request, params }: LoaderArgs) {
   await authGuard(request);
@@ -25,21 +30,31 @@ export async function loader({ request, params }: LoaderArgs) {
 export default function CustomerDetails() {
   const { customer } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  const hydrated = useHydrated();
+  const { state } = useNavigation();
 
   return (
     <>
-      <h1 className="text-xl font-bold my-4">Customer Information</h1>
+      <h1 className="flex flex-wrap gap-y-4">
+        Customer
+        <Link
+          to={`/prescriptions/new?customer=${customer.id}`}
+          className="ml-auto btn btn-primary"
+        >
+          Add Prescription
+        </Link>
+      </h1>
+
       <Form
         id="customer-form"
         method="patch"
-        className="grid md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3 pr-8"
+        className="grid md:grid-cols-4 gap-x-8 gap-y-3"
       >
         <div className="md:col-span-2">
-          <Label htmlFor="name" className="mb-1">
+          <label htmlFor="name" className="mb-1 label">
             Name
-          </Label>
-          <TextInput
+          </label>
+          <input
+            className="input w-full"
             id="name"
             name="name"
             type="text"
@@ -48,10 +63,11 @@ export default function CustomerDetails() {
         </div>
 
         <div>
-          <Label htmlFor="nid" className="mb-1">
+          <label htmlFor="nid" className="mb-1 label">
             ID Card No.
-          </Label>
-          <TextInput
+          </label>
+          <input
+            className="input w-full"
             id="nid"
             name="nid"
             type="text"
@@ -60,10 +76,11 @@ export default function CustomerDetails() {
         </div>
 
         <div>
-          <Label htmlFor="phone" className="mb-1">
+          <label htmlFor="phone" className="mb-1 label">
             Phone
-          </Label>
-          <TextInput
+          </label>
+          <input
+            className="input w-full"
             id="phone"
             name="phone"
             type="text"
@@ -72,10 +89,11 @@ export default function CustomerDetails() {
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="address" className="mb-1">
+          <label htmlFor="address" className="mb-1 label">
             Address
-          </Label>
-          <TextInput
+          </label>
+          <input
+            className="input w-full"
             id="address"
             name="address"
             type="text"
@@ -84,10 +102,11 @@ export default function CustomerDetails() {
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="photo" className="mb-1">
+          <label htmlFor="photo" className="mb-1 label">
             Photo
-          </Label>
-          <TextInput
+          </label>
+          <input
+            className="input w-full"
             id="photo"
             name="photo"
             type="text"
@@ -95,58 +114,77 @@ export default function CustomerDetails() {
           />
         </div>
 
-        <div className="md:col-span-2">
-          <Label htmlFor="notes" className="mb-1">
+        <div className="col-span-full">
+          <label htmlFor="notes" className="mb-1 label">
             Notes
-          </Label>
-          <Textarea id="notes" name="notes" />
+          </label>
+          <textarea
+            rows={8}
+            className="textarea w-full"
+            id="notes"
+            name="notes"
+          />
         </div>
       </Form>
 
-      <div className="flex gap-4 py-4 items-center pr-8">
-        <Button outline type="submit" form="customer-form">
-          Save
-        </Button>
-        <Button color="gray" type="reset" form="customer-form">
+      <div className="flex gap-4 py-4 items-center mt-8">
+        <button
+          className="btn btn-sm btn-primary w-28"
+          type="submit"
+          form="customer-form"
+          disabled={state != "idle"}
+        >
+          {state != "idle" ? (
+            <ArrowPathIcon className="mx-auto animate-spin w-5" />
+          ) : (
+            "Save"
+          )}
+        </button>
+        <button className="btn btn-sm" type="reset" form="customer-form">
           Reset
-        </Button>
-        <Form className="ml-auto" method="delete">
-          <Button outline color="failure" size="xs" type="submit">
-            Delete
-          </Button>
-        </Form>
+        </button>
+        {customer.prescriptions.length === 0 && (
+          <Form className="ml-auto" method="delete">
+            <button
+              className="btn btn-error btn-xs"
+              type="submit"
+              formMethod="delete"
+            >
+              Delete
+            </button>
+          </Form>
+        )}
       </div>
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold my-4">Prescriptions</h1>
-        <AddPrescriptionButtonDialog customer={customer} />
-      </div>
+      <h2 className="mt-8">Prescriptions</h2>
 
-      <div className="pt-8 pr-8">
-        <Table hoverable>
-          <Table.Head>
-            <Table.HeadCell>Id</Table.HeadCell>
-            <Table.HeadCell>Renewal</Table.HeadCell>
-            <Table.HeadCell>Notes</Table.HeadCell>
-          </Table.Head>
-          <Table.Body className="divide-y">
-            {customer.prescriptions.map((prescription) => (
-              <Table.Row
-                key={prescription.id}
-                role="button"
-                onClick={() => navigate(`/prescriptions/${prescription.id}`)}
-              >
-                <Table.Cell>{prescription.id}</Table.Cell>
-                <Table.Cell>
-                  {hydrated &&
-                    new Date(prescription.renewalDate).toLocaleDateString()}
-                </Table.Cell>
-                <Table.Cell>{prescription.notes}</Table.Cell>
-              </Table.Row>
-            ))}
-          </Table.Body>
-        </Table>
-      </div>
+      <table className="table table-auto table-compact sm:table-normal">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Renewal</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {customer.prescriptions.map((prescription) => (
+            <tr
+              key={prescription.id}
+              role="button"
+              className="hover"
+              onClick={() => navigate(`/prescriptions/${prescription.id}`)}
+            >
+              <td>{prescription.id}</td>
+              <td>
+                {new Date(prescription.renewalDate).toLocaleDateString("en-uk")}
+              </td>
+              <td className="md:text-xs xl:text-sm whitespace-break-spaces">
+                {prescription.notes.substring(0, 50)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </>
   );
 }
@@ -155,10 +193,9 @@ export async function action({ request, params }: ActionArgs) {
   await authGuard(request);
   try {
     if (request.method == "DELETE") {
-      const res = await db.customer.delete({
+      await db.customer.delete({
         where: { id: +params.id! },
       });
-      console.log(res);
       return redirect("/customers");
     }
 

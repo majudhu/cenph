@@ -1,11 +1,10 @@
+import { ArrowPathIcon } from "@heroicons/react/20/solid";
+import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
-import { Button, Label, Spinner, TextInput } from "flowbite-react";
 import { verify } from "~/utils/argon2.server";
 import { db } from "~/utils/db.server";
 import { authGuard, createUserSession, logout } from "~/utils/session.server";
-
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 
 export async function loader({ request }: LoaderArgs) {
   try {
@@ -20,28 +19,44 @@ export default function Index() {
   const actionData = useActionData<typeof action>();
 
   return (
-    <Form method="post" className="m-auto text-center p-4">
-      <Label htmlFor="username" value="Username" className="my-2" />
-      <TextInput id="username" name="username" required className="mt-2 mb-6" />
-      <Label htmlFor="password" value="Password" className="my-2" />
-      <TextInput
+    <Form
+      method="post"
+      className="m-auto text-center px-8 pt-5 pb-8 bg-base-300 card"
+    >
+      <label className="label" htmlFor="username">
+        Username
+      </label>
+      <input
+        id="username"
+        name="username"
+        required
+        className="input input-bordered mb-2"
+      />
+      <label className="label" htmlFor="password">
+        Password
+      </label>
+      <input
         id="password"
         name="password"
         type="password"
         required
         color={actionData ? "failure" : "gray"}
-        helperText={
-          (state == "idle" ? (actionData as string) : undefined) ?? "\xa0"
-        }
-        className="mt-2 mb-6"
+        className="input input-bordered"
       />
-      <Button className="mt-6 mx-auto w-20" type="submit">
+      <p className="pt-2 pb-4 from-error">
+        {(state == "idle" ? (actionData as string) : undefined) ?? "\xa0"}
+      </p>
+      <button
+        className="mx-auto btn btn-primary btn-wide"
+        type="submit"
+        disabled={state != "idle"}
+      >
         {state != "idle" ? (
-          <Spinner className="mx-auto" size="sm" light={true} />
+          <ArrowPathIcon className="mx-auto animate-spin w-6" />
         ) : (
           "Login"
         )}
-      </Button>
+      </button>
     </Form>
   );
 }

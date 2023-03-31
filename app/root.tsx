@@ -1,3 +1,4 @@
+import type { LinksFunction, MetaFunction } from "@remix-run/node";
 import {
   Links,
   LiveReload,
@@ -7,8 +8,6 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import stylesheet from "~/tailwind.css";
-
-import type { LinksFunction, MetaFunction } from "@remix-run/node";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -27,7 +26,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="flex min-h-screen items-stretch gap-4">
+      <body className="min-h-screen flex">
         <Outlet />
         <ScrollRestoration />
         <Scripts />

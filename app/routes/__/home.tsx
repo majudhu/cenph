@@ -1,14 +1,18 @@
-import AddCustomerButtonDialog from "~/components/add-customer-dialog";
+import type { LoaderArgs } from "@remix-run/node";
+import { Link } from "@remix-run/react";
 import { authGuard } from "~/utils/session.server";
 
-import type { LoaderArgs } from "@remix-run/node";
-import AddPrescriptionButtonDialog from "~/components/add-prescription-dialog";
 export default function Home() {
   return (
     <>
-      <div className="flex gap-4 py-4 items-center pr-8">
-        <AddCustomerButtonDialog />
-        <AddPrescriptionButtonDialog />
+      <div className="flex gap-8 py-4 items-center p-8 flex-wrap">
+        <Link to="/customers/new" className="btn">
+          Add Customer
+        </Link>
+
+        <Link to="/prescriptions/new" className="btn">
+          Add Prescription
+        </Link>
       </div>
     </>
   );
@@ -16,6 +20,5 @@ export default function Home() {
 
 export async function loader({ request }: LoaderArgs) {
   await authGuard(request);
-
   return null;
 }

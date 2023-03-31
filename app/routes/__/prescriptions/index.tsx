@@ -1,89 +1,145 @@
-import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
-import { Table } from "flowbite-react";
+import { json } from "@remix-run/node";
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useNavigate,
+  useSearchParams,
+} from "@remix-run/react";
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { useHydrated } from "~/components/use-hydrated";
+import {
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
+  IdentificationIcon,
+  PhoneIcon,
+} from "@heroicons/react/20/solid";
+import type { LoaderArgs } from "@remix-run/node";
+
+const PER_PAGE = 15;
+
+const SORT_BY: Record<string, string> = {
+  id: "id",
+  customer: "customerId",
+  renewal: "renewalDate",
+};
 
 export async function loader({ request }: LoaderArgs) {
   await authGuard(request);
-  const prescriptions = await db.prescription.findMany({
-    include: { customer: true },
-  });
-  return json({ prescriptions });
+
+  const { searchParams } = new URL(request.url);
+  const page = +(searchParams.get("page") as string) || 1;
+  const sortBy = SORT_BY[searchParams.get("sortBy") as string] || "id";
+  const sort = searchParams.get("sort") === "asc" ? "asc" : "desc";
+
+  const [prescriptions, count] = await Promise.all([
+    db.prescription.findMany({
+      include: { customer: true },
+      skip: (page - 1) * PER_PAGE,
+      orderBy: { [sortBy]: sort },
+      take: PER_PAGE,
+    }),
+    db.prescription.count(),
+  ]);
+  return json({ prescriptions, count });
 }
 
 export default function Prescriptions() {
   const navigate = useNavigate();
-  const hydrated = useHydrated();
-  const { prescriptions } = useLoaderData<typeof loader>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { prescriptions, count } = useLoaderData<typeof loader>();
+
+  const sortDesc = searchParams.get("sort") === "desc";
 
   return (
-    <div className="pt-8 pr-8">
-      <Table hoverable>
-        <Table.Head>
-          <Table.HeadCell>Id</Table.HeadCell>
-          <Table.HeadCell>Name</Table.HeadCell>
-          <Table.HeadCell>NID</Table.HeadCell>
-          <Table.HeadCell>Renewal</Table.HeadCell>
-          <Table.HeadCell>Notes</Table.HeadCell>
-        </Table.Head>
-        <Table.Body className="divide-y">
+    <>
+      <h1 className="flex flex-wrap justify-between">
+        Prescriptions
+        <Link to="new" className="btn btn-primary">
+          Add Prescription
+        </Link>
+      </h1>
+
+      <Form className="flex items-center gap-4 mb-8 flex-wrap">
+        <label className="label" htmlFor="sortBy">
+          Sort:
+        </label>
+        <select
+          id="sortBy"
+          name="sortBy"
+          placeholder="sort..."
+          className="input input-bordered w-32"
+          defaultValue={searchParams.get("sortBy") || "id"}
+          onChange={(e) =>
+            setSearchParams({
+              sortBy: e.target.value,
+              sort: sortDesc ? "desc" : "asc",
+            })
+          }
+        >
+          <option value="id">Id</option>
+          <option value="customer">Customer</option>
+          <option value="renewal">Renewal</option>
+        </select>
+        <button
+          type="submit"
+          className="w-12 p-2 btn"
+          name="sort"
+          value={sortDesc ? "asc" : "desc"}
+        >
+          {sortDesc ? <BarsArrowDownIcon /> : <BarsArrowUpIcon />}
+        </button>
+        <span className="ml-auto text-sm font-medium">
+          Total: {count} prescriptions
+        </span>
+      </Form>
+
+      <table className="table table-auto table-compact sm:table-normal">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Customer Name</th>
+            <th className="hidden sm:table-cell">NID</th>
+            <th className="hidden sm:table-cell">Phone</th>
+            <th>Renewal</th>
+            <th className="hidden md:table-cell">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
           {prescriptions.map((prescription) => (
-            <Table.Row
+            <tr
               key={prescription.id}
               role="button"
+              className="hover"
               onClick={() => navigate(prescription.id.toString())}
             >
-              <Table.Cell>{prescription.id}</Table.Cell>
-              <Table.Cell>{prescription.customer.name}</Table.Cell>
-              <Table.Cell>{prescription.customer.id}</Table.Cell>
-              <Table.Cell>
-                {hydrated &&
-                  new Date(prescription.renewalDate).toLocaleDateString()}
-              </Table.Cell>
-              <Table.Cell>{prescription.notes}</Table.Cell>
-            </Table.Row>
+              <td>{prescription.id}</td>
+              <td className="whitespace-break-spaces">
+                {prescription.customer.name}
+                <span className="sm:hidden flex items-center text-sm">
+                  <IdentificationIcon className="mr-1 w-4 h-4" />
+                  {prescription.customer.nid}
+                  <PhoneIcon className="ml-4 mr-1 w-4 h-4" />
+                  {prescription.customer.phone}
+                </span>
+              </td>
+              <td className="hidden sm:table-cell">
+                {prescription.customer.nid}
+              </td>
+              <td className="hidden sm:table-cell">
+                {prescription.customer.phone}
+              </td>
+              <td>
+                {new Date(prescription.renewalDate).toLocaleDateString("en-uk")}
+              </td>
+              <td className="hidden md:table-cell md:text-xs xl:text-sm whitespace-break-spaces">
+                {prescription.notes.substring(0, 50)}
+              </td>
+            </tr>
           ))}
-        </Table.Body>
-      </Table>
-    </div>
+        </tbody>
+      </table>
+    </>
   );
-}
-
-export async function action({ request }: ActionArgs) {
-  await authGuard(request);
-  try {
-    const formData = await request.formData();
-    const descriptions = formData.getAll("description") as string[];
-    const expiries = formData.getAll("expiry") as string[];
-    const quantities = formData.getAll("quantity") as string[];
-    const rates = formData.getAll("rate") as string[];
-
-    const { id } = await db.prescription.create({
-      data: {
-        customerId: +formData.get("customerId")!,
-        notes: formData.get("notes") as string,
-        renewalDate: new Date(formData.get("renewalDate") as string),
-      },
-    });
-
-    await Promise.all(
-      descriptions.map((description, i) =>
-        db.item.create({
-          data: {
-            prescriptionId: id,
-            description,
-            expiry: expiries[i] ? new Date(expiries[i]) : new Date(),
-            quantity: +quantities[i],
-            rate: +rates[i],
-          },
-        })
-      )
-    );
-    return redirect(`/prescriptions/${id}`);
-  } catch (ex) {}
-  return new Response(null, { status: 400 });
 }

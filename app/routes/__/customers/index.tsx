@@ -1,66 +1,147 @@
-import { json, redirect } from "@remix-run/node";
-import { useLoaderData, useNavigate } from "@remix-run/react";
-import { Table } from "flowbite-react";
-import AddCustomerButtonDialog from "~/components/add-customer-dialog";
+import { IdentificationIcon, PhoneIcon } from "@heroicons/react/20/solid";
+import type { Prisma } from "@prisma/client";
+import type { LoaderArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import {
+  Form,
+  Link,
+  useLoaderData,
+  useNavigate,
+  useSearchParams,
+} from "@remix-run/react";
+import { debounce } from "lodash";
+import { useMemo } from "react";
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
-import type { Customer } from "@prisma/client";
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+const PER_PAGE = 15;
 
 export async function loader({ request }: LoaderArgs) {
   await authGuard(request);
-  const customers = await db.customer.findMany({});
-  return json({ customers });
+
+  const { searchParams } = new URL(request.url);
+  const page = +(searchParams.get("page") as string) || 1;
+  const search = searchParams.get("search");
+
+  const where: Prisma.CustomerWhereInput | undefined = search
+    ? {
+        OR: [
+          { name: { contains: search } },
+          { nid: { contains: search } },
+          { phone: { contains: search } },
+        ],
+      }
+    : undefined;
+
+  const [customers, count] = await Promise.all([
+    db.customer.findMany({
+      where,
+      skip: (page - 1) * PER_PAGE,
+      take: PER_PAGE,
+    }),
+    db.customer.count({ where }),
+  ]);
+  return json({ customers, count, page });
 }
 
 export default function Customers() {
   const navigate = useNavigate();
-  const { customers } = useLoaderData<typeof loader>();
+  const [searchparams, setSearchParams] = useSearchParams();
+  const { customers, count, page } = useLoaderData<typeof loader>();
+
+  const debounceSubmit = useMemo(
+    () =>
+      debounce(
+        (e: React.ChangeEvent<HTMLInputElement>) =>
+          setSearchParams({ search: e.target.value }),
+        500
+      ),
+    [setSearchParams]
+  );
+
+  const searched = searchparams.get("search");
 
   return (
-    <div>
-      <div className="flex gap-4 py-4 items-center pr-8">
-        <AddCustomerButtonDialog />
-      </div>
+    <>
+      <h1 className="flex flex-wrap justify-between">
+        Customers
+        <Link to="new" className="btn btn-primary">
+          Add Customer
+        </Link>
+      </h1>
 
-      <Table hoverable>
-        <Table.Head>
-          <Table.HeadCell>Id</Table.HeadCell>
-          <Table.HeadCell>Name</Table.HeadCell>
-          <Table.HeadCell>NID</Table.HeadCell>
-          <Table.HeadCell>Phone</Table.HeadCell>
-          <Table.HeadCell>Address</Table.HeadCell>
-        </Table.Head>
-        <Table.Body className="divide-y">
+      <Form className="flex items-center gap-4 flex-wrap justify-between mb-8">
+        <input
+          key={searched}
+          autoFocus
+          name="search"
+          placeholder="Search..."
+          type="search"
+          className="input input-bordered w-full sm:w-1/2 max-w-md"
+          defaultValue={searched || ""}
+          onChange={debounceSubmit}
+        />
+        <span className="text-sm font-medium">Total: {count} customers</span>
+      </Form>
+
+      <table className="table table-auto table-compact md:table-normal">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th className="hidden sm:table-cell">NID</th>
+            <th className="hidden sm:table-cell">Phone</th>
+            <th className="hidden md:table-cell">Address</th>
+          </tr>
+        </thead>
+        <tbody>
           {customers.map((customer) => (
-            <Table.Row
+            <tr
               key={customer.id}
+              className="hover"
               role="button"
               onClick={() => navigate(customer.id.toString())}
             >
-              <Table.Cell>{customer.id}</Table.Cell>
-              <Table.Cell>{customer.name}</Table.Cell>
-              <Table.Cell>{customer.nid}</Table.Cell>
-              <Table.Cell>{customer.phone}</Table.Cell>
-              <Table.Cell>{customer.address}</Table.Cell>
-            </Table.Row>
+              <td>{customer.id}</td>
+              <td className="whitespace-break-spaces">
+                {customer.name}
+                <span className="sm:hidden flex items-center">
+                  <IdentificationIcon className="mr-1 w-4 h-4" />
+                  {customer.nid}
+                  <PhoneIcon className="ml-4 mr-1 w-4 h-4" />
+                  {customer.phone}
+                </span>
+                <span className="text-xs md:hidden">{customer.address}</span>
+              </td>
+              <td className="hidden sm:table-cell">{customer.nid}</td>
+              <td className="hidden sm:table-cell">{customer.phone}</td>
+              <td className="hidden md:table-cell md:text-xs xl:text-sm whitespace-break-spaces">
+                {customer.address}
+              </td>
+            </tr>
           ))}
-        </Table.Body>
-      </Table>
-    </div>
+        </tbody>
+      </table>
+
+      {count > PER_PAGE && (
+        <Form
+          className="btn-group mt-8"
+          onSubmit={() => document.querySelector("table")?.scrollIntoView()}
+        >
+          {searched && <input type="hidden" name="search" value={searched} />}
+          {Array.from({ length: Math.ceil(count / PER_PAGE) }, (_, i) => (
+            <button
+              key={i}
+              className={`btn ${i + 1 == page ? "btn-active" : ""}`}
+              type="submit"
+              name="page"
+              value={i + 1}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </Form>
+      )}
+    </>
   );
-}
-
-export async function action({ request }: ActionArgs) {
-  await authGuard(request);
-  try {
-    const formData = await request.formData();
-
-    const { id } = await db.customer.create({
-      data: Object.fromEntries(formData) as unknown as Customer,
-    });
-    return redirect(`/customers/${id}`);
-  } catch (ex) {}
-  return new Response(null, { status: 400 });
 }

@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  h1 {
+    @apply ml-8 lg:ml-0 text-xl font-bold mb-4;
+  }
+
+  h2 {
+    @apply text-xl font-bold my-4;
+  }
+}

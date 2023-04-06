@@ -7,10 +7,11 @@ import {
 } from "@heroicons/react/20/solid";
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
-import { Form, useLoaderData, useNavigation } from "@remix-run/react";
+import { Form, Link, useLoaderData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
+import { parseMultipart } from "~/utils/upload.server";
 
 export async function loader({ request, params }: LoaderArgs) {
   await authGuard(request);
@@ -40,14 +41,17 @@ export default function NewPrescription() {
   return (
     <>
       <h1>Add Prescription</h1>
-      <Form method="post">
+      <Form method="post" encType="multipart/form-data">
         <div className="flex justify-between items-center pb-3">
           <h2 className="mb-1 text-sm font-medium text-gray-900 dark:text-gray-300">
             Customer
           </h2>
         </div>
 
-        <div className="flex gap-4 text-sm md:text-base card flex-row bg-base-100 p-2 font-medium mb-3 hover:bg-base-300">
+        <Link
+          to="./.."
+          className="flex flex-wrap gap-4 text-sm md:text-base card flex-row bg-base-100 p-2 font-medium mb-3 hover:bg-base-300"
+        >
           <div className="flex-1">
             <p className="mb-1">
               <UserIcon className="inline mr-1 align-[-1px] w-4" />
@@ -68,12 +72,35 @@ export default function NewPrescription() {
               {customer.nid}
             </p>
           </div>
-        </div>
+          {customer.photo && (
+            <img
+              className="flex-none w-auto h-[52px]"
+              alt=""
+              src={`/uploads/${customer.photo}`}
+            />
+          )}
+        </Link>
 
         <label className="label" htmlFor="notes">
           Notes
         </label>
-        <textarea id="notes" name="notes" className="mt-1 mb-3 textarea" />
+        <textarea
+          id="notes"
+          name="notes"
+          rows={8}
+          className="mt-1 mb-3 textarea textarea-bordered w-full"
+        />
+
+        <label className="label" htmlFor="prescription">
+          Prescription
+        </label>
+        <input
+          id="prescription"
+          name="prescription"
+          type="file"
+          className="input file-input input-bordered px-0 w-full mb-2"
+          accept="image/*,application/pdf"
+        />
 
         <label className="label" htmlFor="renewalDate">
           Renewal Date
@@ -82,7 +109,7 @@ export default function NewPrescription() {
           id="renewalDate"
           name="renewalDate"
           type="date"
-          className="mt-1 mb-3 input"
+          className="mt-1 mb-3 input input-bordered"
           value={renewalDate}
           onChange={(e) => setrenewalDate(e.target.value)}
         />
@@ -124,12 +151,16 @@ export default function NewPrescription() {
 export async function action({ request, params }: ActionArgs) {
   await authGuard(request);
   try {
-    const formData = await request.formData();
+    const formData = await parseMultipart(request);
+
+    const prescription = formData.get("prescription") as File;
+
     const { id } = await db.prescription.create({
       data: {
         customerId: +params.id!,
         notes: formData.get("notes") as string,
         renewalDate: new Date(formData.get("renewalDate") as string),
+        prescription: prescription?.name ? prescription.name : undefined,
       },
     });
     return redirect(`/prescriptions/${id}`);

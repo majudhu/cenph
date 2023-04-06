@@ -51,6 +51,11 @@ export default function Layout() {
                 Prescriptions
               </NavLink>
             </li>
+            <li>
+              <NavLink to="/settings" className={navLinkClass}>
+                Settings
+              </NavLink>
+            </li>
 
             <li className="mt-auto disabled">
               <Form action="/?index">

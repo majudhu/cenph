@@ -7,20 +7,16 @@ export async function loader({ request }: LoaderArgs) {
   return null;
 }
 
-export default function Home() {
+export default function Settings() {
   return (
     <>
       <div className="flex gap-8 py-4 items-center p-8 flex-wrap">
-        <Link to="/customers" className="btn">
-          Customers
+        <Link to="disk" className="btn">
+          Disk Usage
         </Link>
 
-        <Link to="/customers/new" className="btn">
-          Add Customer
-        </Link>
-
-        <Link to="/prescriptions" className="btn">
-          Prescriptions
+        <Link to="password" className="btn">
+          Change password
         </Link>
       </div>
     </>

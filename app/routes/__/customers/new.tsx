@@ -1,10 +1,15 @@
 import { ArrowPathIcon } from "@heroicons/react/20/solid";
-import type { Customer } from "@prisma/client";
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { Form, useNavigation } from "@remix-run/react";
+import { useRef, useState } from "react";
 import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
+import {
+  pastePhotoFromClipboard,
+  previewPhotoFromInput,
+} from "~/utils/upload-hooks";
+import { parseMultipart } from "~/utils/upload.server";
 
 export async function loader({ request }: LoaderArgs) {
   await authGuard(request);
@@ -13,8 +18,15 @@ export async function loader({ request }: LoaderArgs) {
 
 export default function NewCustomer() {
   const { state } = useNavigation();
+  const [base64Image, setBase64Image] = useState("");
+  const uploadRef = useRef<HTMLInputElement>(null);
+
   return (
-    <Form method="post" className="bg-base-200 max-w-md">
+    <Form
+      method="post"
+      className="bg-base-200 max-w-md"
+      encType="multipart/form-data"
+    >
       <h1>Add a customer</h1>
 
       <label className="label" htmlFor="name">
@@ -60,12 +72,30 @@ export default function NewCustomer() {
       <label className="label" htmlFor="photo">
         Photo
       </label>
+      {base64Image && (
+        <img
+          src={base64Image}
+          alt="preview"
+          className="w-auto mx-auto h-[250px] mb-2 object-contain"
+        />
+      )}
+
       <input
+        ref={uploadRef}
         id="photo"
         name="photo"
-        type="text"
-        className="input input-bordered w-full mb-2"
+        type="file"
+        className="input file-input input-bordered px-0 w-full mb-2"
+        accept="image/*"
+        onChange={previewPhotoFromInput(setBase64Image)}
       />
+      <button
+        type="button"
+        className="btn w-full"
+        onClick={pastePhotoFromClipboard(setBase64Image, uploadRef)}
+      >
+        Paste from clipboard
+      </button>
 
       <label className="label" htmlFor="notes">
         Notes
@@ -97,11 +127,12 @@ export default function NewCustomer() {
 export async function action({ request }: ActionArgs) {
   await authGuard(request);
   try {
-    const formData = await request.formData();
+    const formData = await parseMultipart(request);
 
-    const { id } = await db.customer.create({
-      data: Object.fromEntries(formData) as unknown as Customer,
-    });
+    const data = Object.fromEntries(formData);
+    data.photo = (data.photo as File).name;
+    // @ts-expect-error
+    const { id } = await db.customer.create({ data });
     return redirect(`/customers/${id}`);
   } catch (ex) {}
   return new Response(null, { status: 400 });

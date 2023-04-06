@@ -1,5 +1,6 @@
 import {
   ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
   HomeIcon,
   IdentificationIcon,
   PhoneIcon,
@@ -11,6 +12,7 @@ import { db } from "~/utils/db.server";
 import { authGuard } from "~/utils/session.server";
 
 import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import { parseMultipart, removeFile } from "~/utils/upload.server";
 
 export async function loader({ request, params }: LoaderArgs) {
   await authGuard(request);
@@ -35,7 +37,7 @@ export default function PrescriptionDetails() {
 
       <Link
         to={`/customers/${prescription.customerId}`}
-        className="flex gap-4 text-sm md:text-base card flex-row bg-base-100 p-2 font-medium mb-3 hover:bg-base-300"
+        className="flex flex-wrap gap-4 text-sm md:text-base card flex-row bg-base-100 p-2 font-medium mb-3 hover:bg-base-300"
       >
         <div className="flex-1">
           <p className="mb-1">
@@ -57,12 +59,20 @@ export default function PrescriptionDetails() {
             {prescription.customer.nid}
           </p>
         </div>
+        {prescription.customer.photo && (
+          <img
+            className="flex-none w-auto h-[52px]"
+            alt=""
+            src={`/uploads/${prescription.customer.photo}`}
+          />
+        )}
       </Link>
 
       <Form
         id="prescription-form"
         method="patch"
         className="grid md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3"
+        encType="multipart/form-data"
       >
         <div className="md:col-span-full">
           <label htmlFor="notes" className="mb-1 label">
@@ -74,6 +84,19 @@ export default function PrescriptionDetails() {
             id="notes"
             name="notes"
             defaultValue={prescription.notes}
+          />
+        </div>
+        <div>
+          <label className="mb-1 label" htmlFor="prescription">
+            Prescription
+          </label>
+          <input
+            key={prescription.prescription}
+            id="prescription"
+            name="prescription"
+            type="file"
+            className="input file-input px-0 w-full mb-2"
+            accept="image/*,application/pdf"
           />
         </div>
 
@@ -89,6 +112,23 @@ export default function PrescriptionDetails() {
             defaultValue={prescription.renewalDate.substring(0, 10)}
           />
         </div>
+
+        {prescription.prescription && (
+          <object
+            className="col-span-full w-full min-h-[500px] object-contain"
+            data={`/uploads/${prescription.prescription}`}
+          >
+            <a
+              className="link"
+              target="_blank"
+              rel="noreferrer"
+              href={`/uploads/${prescription.prescription}`}
+            >
+              View Prescription{" "}
+              <ArrowTopRightOnSquareIcon className="w-6 inline" />
+            </a>
+          </object>
+        )}
       </Form>
 
       <div className="flex gap-4 py-4 items-center mt-8">
@@ -129,7 +169,19 @@ export async function action({ request, params }: ActionArgs) {
       return redirect("/prescriptions");
     }
 
-    const formData = await request.formData();
+    const formData = await parseMultipart(request);
+
+    const prescription = formData.get("prescription") as File;
+
+    if (prescription?.name) {
+      const oldData = await db.prescription.findFirst({
+        where: { id },
+        select: { prescription: true },
+      });
+      if (oldData?.prescription) {
+        await removeFile(oldData.prescription);
+      }
+    }
 
     await db.prescription.update({
       where: { id },
@@ -138,6 +190,7 @@ export async function action({ request, params }: ActionArgs) {
         renewalDate: formData.get("expiry")
           ? new Date(formData.get("expiry") as string)
           : undefined,
+        prescription: prescription?.name ? prescription.name : undefined,
       },
     });
 

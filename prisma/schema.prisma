@@ -28,11 +28,12 @@ model Customer {
 }
 
 model Prescription {
-  customer    Customer @relation(fields: [customerId], references: [id])
-  customerId  Int
-  id          Int      @id @default(autoincrement())
-  notes       String
-  renewalDate DateTime
+  customer     Customer @relation(fields: [customerId], references: [id])
+  customerId   Int
+  id           Int      @id @default(autoincrement())
+  notes        String
+  renewalDate  DateTime
+  prescription String   @default("")
 
   @@index([customerId, renewalDate])
 }

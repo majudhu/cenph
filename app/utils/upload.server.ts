@@ -1,5 +1,4 @@
 import { createId } from "@paralleldrive/cuid2";
-
 import {
   unstable_composeUploadHandlers,
   unstable_createFileUploadHandler,
@@ -7,7 +6,7 @@ import {
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
 import type { FileUploadHandlerOptions } from "@remix-run/node/dist/upload/fileUploadHandler";
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 
 export function parseMultipart(request: Request) {
   return unstable_parseMultipartFormData(
@@ -42,24 +41,43 @@ export async function removeFile(name: string) {
 }
 
 export async function statfs() {
-  const path = `${__dirname}/../public/uploads/`;
-  const [{ bfree, bsize, blocks }, files] = await Promise.all([
-    fs.statfs(path),
-    fs.readdir(path).then((files) =>
+  const uploads = `${__dirname}/../public/uploads/`;
+
+  const dbfile = process.env.DATABASE_URL!.startsWith("file:./")
+    ? __dirname + "/../prisma" + process.env.DATABASE_URL!.substring(6)
+    : process.env.DATABASE_URL!.substring(5);
+
+  const [{ bfree, bsize, blocks }, files, db] = await Promise.all([
+    fs.statfs(uploads),
+    fs.readdir(uploads).then((files) =>
       Promise.all(
         files.map(async (name) => {
-          const stat = await fs.stat(path + name);
-          return { name, size: Math.ceil(stat.size / 1024), date: stat.mtime };
+          const stat = await fs.stat(uploads + name);
+          return {
+            name,
+            size: Math.ceil(stat.size / 1024),
+            date: dateFormat(stat.mtime),
+          };
         })
       )
     ),
+    fs.stat(dbfile),
   ]);
 
   files.sort((a, b) => b.size - a.size);
 
   return {
     files,
-    free: (bfree * bsize) / 2 ** 20,
-    size: (bsize * blocks) / 2 ** 20,
+    free: (bfree * bsize) / MB_BYTES,
+    size: (bsize * blocks) / MB_BYTES,
+    db: db.size / MB_BYTES,
   };
 }
+
+const MB_BYTES = 2 ** 20;
+
+const dateFormat = new Intl.DateTimeFormat("en-uk", {
+  dateStyle: "short",
+  timeStyle: "short",
+  timeZone: "Indian/Maldives",
+}).format;

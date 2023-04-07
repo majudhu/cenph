@@ -102,7 +102,7 @@ export default function PrescriptionDetails() {
 
         <div>
           <label htmlFor="nid" className="mb-1 label">
-            Renewal Date.
+            Renewal Date
           </label>
           <input
             className="input w-full"
@@ -195,8 +195,6 @@ export async function action({ request, params }: ActionArgs) {
     });
 
     return new Response(null, { status: 204 });
-  } catch (ex) {
-    console.error(ex);
-  }
+  } catch (ex) {}
   return new Response(null, { status: 400 });
 }

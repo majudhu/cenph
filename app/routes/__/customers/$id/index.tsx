@@ -248,8 +248,6 @@ export async function action({ request, params }: ActionArgs) {
     await db.customer.update({ where, data });
 
     return new Response(null, { status: 204 });
-  } catch (ex) {
-    console.error(ex);
-  }
+  } catch (ex) {}
   return new Response(null, { status: 400 });
 }

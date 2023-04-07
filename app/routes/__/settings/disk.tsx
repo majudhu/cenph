@@ -3,7 +3,6 @@ import { json } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import { authGuard } from "~/utils/session.server";
 import { removeFile, statfs } from "~/utils/upload.server";
-import { db } from "~/utils/db.server";
 
 export async function loader({ request }: LoaderArgs) {
   await authGuard(request);

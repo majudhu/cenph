@@ -225,7 +225,13 @@ export async function action({ request, params }: ActionArgs) {
   try {
     const where = { id: +params.id! };
     if (request.method == "DELETE") {
-      await db.customer.delete({ where });
+      const { photo } = await db.customer.delete({
+        where,
+        select: { photo: true },
+      });
+      if (photo) {
+        await removeFile(photo);
+      }
       return redirect("/customers");
     }
 

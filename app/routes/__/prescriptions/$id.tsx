@@ -163,9 +163,13 @@ export async function action({ request, params }: ActionArgs) {
   try {
     const id = +params.id!;
     if (request.method == "DELETE") {
-      await db.prescription.delete({
+      const { prescription } = await db.prescription.delete({
         where: { id },
+        select: { prescription: true },
       });
+      if (prescription) {
+        await removeFile(prescription);
+      }
       return redirect("/prescriptions");
     }
 

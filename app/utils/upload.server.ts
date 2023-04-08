@@ -36,15 +36,15 @@ const MIME2EXT: Record<string, string> = {
 
 export async function removeFile(name: string) {
   try {
-    await fs.unlink(`${__dirname}/../public/uploads/${name}`);
+    await fs.unlink(`public/uploads/${name}`);
   } catch (ex) {}
 }
 
 export async function statfs() {
-  const uploads = `${__dirname}/../public/uploads/`;
+  const uploads = `public/uploads/`;
 
   const dbfile = process.env.DATABASE_URL!.startsWith("file:./")
-    ? __dirname + "/../prisma" + process.env.DATABASE_URL!.substring(6)
+    ? "prisma" + process.env.DATABASE_URL!.substring(6)
     : process.env.DATABASE_URL!.substring(5);
 
   const [{ bfree, bsize, blocks }, files, db] = await Promise.all([

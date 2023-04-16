@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # base node image
-FROM node:lts-alpine as base
+FROM node:lts-alpine3.17 as base
 
 # Install openssl for Prisma
 RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add openssl libc6-compat sqlite xz
@@ -31,7 +31,7 @@ COPY --link . .
 RUN pnpm build
 
 # build the cenph-reminder rust worker service
-FROM rust:alpine as rust-builder
+FROM rust:alpine3.17 as rust-builder
 
 RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add openssl openssl-dev musl-dev
 
@@ -40,7 +40,7 @@ WORKDIR /app
 COPY --link cenph-reminder .
 RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry --mount=type=cache,id=rust-build,target=target cargo install --path .
 RUN mv /usr/local/cargo/bin/cenph-reminder .
-# 
+
 # Finally, build the production image with minimal footprint
 FROM base
 

@@ -67,7 +67,6 @@ dependencies = [
  "chrono",
  "futures",
  "hyper",
- "hyper-tls",
  "serde",
  "serde_json",
  "teloxide",

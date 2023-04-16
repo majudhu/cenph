@@ -38,8 +38,10 @@ RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add opens
 RUN mkdir /app
 WORKDIR /app
 COPY --link cenph-reminder .
-RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry --mount=type=cache,id=rust-build,target=target cargo install --path .
-RUN mv /usr/local/cargo/bin/cenph-reminder .
+RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry \
+    --mount=type=cache,id=rust-build,target=target \
+    RUSTFLAGS="-Ctarget-feature=-crt-static" \
+    cargo install --path .
 
 # Finally, build the production image with minimal footprint
 FROM base
@@ -53,6 +55,6 @@ COPY --link --from=build /app/build /app/build
 COPY --link --from=build /app/public /app/public
 COPY --link . .
 
-COPY  --from=rust-builder /app/cenph-reminder ./cenph-reminder
+COPY  --from=rust-builder /usr/local/cargo/bin/cenph-reminder ./cenph-reminder
 
 CMD "./start_with_migrations.sh"

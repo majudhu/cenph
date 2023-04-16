@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use futures::future::join_all;
 use hyper::{body, body::Buf, Body, Client, Request, Response};
+use hyper_tls::HttpsConnector;
 use serde::{de::DeserializeOwned, Deserialize};
 use std::env;
 use teloxide::prelude::*;
@@ -57,7 +58,8 @@ async fn main() -> AsyncResult<()> {
 }
 
 async fn api_req_blank(method: &str, body: Body) -> AsyncResult<Response<Body>> {
-    let client = Client::new();
+    let https = HttpsConnector::new();
+    let client = Client::builder().build(https);
     let api_url = &format!("{}/prescriptions/expiring", &env::var("API_URL")?);
     let request = Request::builder()
         .uri(api_url)

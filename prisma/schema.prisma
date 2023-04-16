@@ -34,6 +34,7 @@ model Prescription {
   notes        String
   renewalDate  DateTime
   prescription String   @default("")
+  notified     Int      @default(10000)
 
   @@index([customerId, renewalDate])
 }

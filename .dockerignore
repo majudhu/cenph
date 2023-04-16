@@ -11,3 +11,5 @@ fly.toml
 /prisma/dev.db-journal
 /public/uploads
 
+/cenph-reminder/target
+/cenph-reminder/dev.sh

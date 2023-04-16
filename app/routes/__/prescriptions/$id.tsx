@@ -191,8 +191,8 @@ export async function action({ request, params }: ActionArgs) {
       where: { id },
       data: {
         notes: (formData.get("notes") as string) || undefined,
-        renewalDate: formData.get("expiry")
-          ? new Date(formData.get("expiry") as string)
+        renewalDate: formData.get("renewalDate")
+          ? new Date(formData.get("renewalDate") as string)
           : undefined,
         prescription: prescription?.name ? prescription.name : undefined,
       },

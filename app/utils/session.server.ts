@@ -51,8 +51,12 @@ export async function logout(request: Request) {
 
 export async function authGuard(request: Request) {
   const session = await getSession(request);
-  if (session.get("username") != "cenph") {
+  if (
+    request.headers.get("Authorization") !== process.env.API_KEY &&
+    session.get("username") !== "cenph"
+  ) {
     throw redirect("/");
   }
+
   return session;
 }

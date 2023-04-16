@@ -30,15 +30,29 @@ RUN --mount=type=cache,id=pnpm,target=$PNPM pnpm install --production=false
 COPY --link . .
 RUN pnpm build
 
+# build the cenph-reminder rust worker service
+FROM rust:alpine as rust-builder
+
+RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add openssl openssl-dev musl-dev
+
+RUN mkdir /app
+WORKDIR /app
+COPY --link cenph-reminder .
+RUN --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry --mount=type=cache,id=rust-build,target=target cargo install --path .
+RUN mv /usr/local/cargo/bin/cenph-reminder .
+# 
 # Finally, build the production image with minimal footprint
 FROM base
 
 RUN mkdir /app
 WORKDIR /app
 
+
 COPY --link --from=production-deps /app/node_modules /app/node_modules
 COPY --link --from=build /app/build /app/build
 COPY --link --from=build /app/public /app/public
 COPY --link . .
+
+COPY  --from=rust-builder /app/cenph-reminder ./cenph-reminder
 
 CMD "./start_with_migrations.sh"

@@ -1,53 +1,59 @@
-# fly.toml file generated for cenph on 2023-04-01T03:19:30+05:00
+# fly.toml file generated for cenph on 2023-04-14T17:55:30+05:00
 
 app = "cenph"
 kill_signal = "SIGINT"
 kill_timeout = 5
 primary_region = "sin"
-processes = []
 
 [env]
-  DATABASE_URL = "file:/data/sqlite.db"
-  PORT = "8080"
+API_URL = "https://cenph.fly.dev"
+DATABASE_URL = "file:/data/sqlite.db"
+PORT = "8080"
+PRIMARY_REGION = "sin"
 
-[experimental]
-  cmd = "start_with_migrations.sh"
-  entrypoint = "sh"
+[mounts]
+processes = ["web"]
+source = "data"
+destination = "/data"
 
-[[mounts]]
-  destination = "/data"
-  source = "data"
+[processes]
+cenph-reminder = "/app/cenph-reminder/cenph-reminder"
+web = "/app/start_with_migrations.sh"
 
 [[services]]
-  internal_port = 8080
-  processes = ["app"]
-  protocol = "tcp"
-  [services.concurrency]
-    hard_limit = 25
-    soft_limit = 20
-    type = "connections"
+protocol = "tcp"
+internal_port = 8080
+processes = ["web"]
 
-  [[services.http_checks]]
-    grace_period = "60s"
-    interval = "10s"
-    method = "get"
-    path = "/"
-    protocol = "http"
-    timeout = "5s"
-    tls_skip_verify = false
-    [services.http_checks.headers]
+[[services.ports]]
+port = 80
+handlers = ["http"]
+force_https = true
 
-  [[services.ports]]
-    force_https = true
-    handlers = ["http"]
-    port = 80
+[[services.ports]]
+port = 443
+handlers = ["tls", "http"]
+[services.concurrency]
+type = "connections"
+hard_limit = 25
+soft_limit = 20
 
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
+[[services.tcp_checks]]
+interval = "5s"
+timeout = "2s"
+grace_period = "1m0s"
+restart_limit = 0
 
-  [[services.tcp_checks]]
-    grace_period = "60s"
-    interval = "5s"
-    restart_limit = 0
-    timeout = "2s"
+[[services.http_checks]]
+interval = "10s"
+timeout = "5s"
+grace_period = "1m0s"
+restart_limit = 0
+method = "get"
+path = "/"
+protocol = "http"
+
+[[services]]
+protocol = ""
+internal_port = 0
+processes = ["cenph-reminder"]

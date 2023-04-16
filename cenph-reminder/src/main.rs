@@ -58,8 +58,7 @@ async fn main() -> AsyncResult<()> {
 }
 
 async fn api_req_blank(method: &str, body: Body) -> AsyncResult<Response<Body>> {
-    let https = HttpsConnector::new();
-    let client = Client::builder().build(https);
+    let client = Client::builder().build(HttpsConnector::new());
     let api_url = &format!("{}/prescriptions/expiring", &env::var("API_URL")?);
     let request = Request::builder()
         .uri(api_url)

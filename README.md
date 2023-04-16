@@ -15,8 +15,9 @@ flyctl auth signup
 3. Setup Fly. It might ask if you want to deploy, say no since you haven't built the app yet.
 
 ```sh
-flyctl launch
-flyctl secrets set SESSION_SECRET="$(openssl rand -base64 32)"
+flyctl launch --copy-config --no-deploy
+flyctl secrets set SESSION_SECRET="$(openssl rand -base64 32)" API_KEY="$(openssl rand -base64 15)" TG_CHAT_ID=""
+flyctl volume create data -s 1"
 ```
 
 ## Development

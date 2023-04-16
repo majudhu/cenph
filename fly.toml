@@ -21,9 +21,9 @@ cenph-reminder = "/app/cenph-reminder/cenph-reminder"
 web = "/app/start_with_migrations.sh"
 
 [[services]]
+processes = ["web"]
 protocol = "tcp"
 internal_port = 8080
-processes = ["web"]
 
 [[services.ports]]
 port = 80
@@ -41,18 +41,18 @@ soft_limit = 20
 [[services.tcp_checks]]
 interval = "5s"
 timeout = "2s"
-grace_period = "1m0s"
+grace_period = "10s"
 restart_limit = 0
 
 [[services.http_checks]]
 interval = "10s"
 timeout = "5s"
-grace_period = "1m0s"
+grace_period = "10s"
 restart_limit = 0
 method = "get"
 path = "/"
 protocol = "http"
 
 [[services]]
-restart_limit = 1
 processes = ["cenph-reminder"]
+restart_limit = 1

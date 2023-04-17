@@ -6,7 +6,7 @@ kill_timeout = 5
 primary_region = "sin"
 
 [env]
-API_URL = "http://cenph.internal:8080"
+WEB_URL = "https://cenph.fly.dev"
 DATABASE_URL = "file:/data/sqlite.db"
 PORT = "8080"
 PRIMARY_REGION = "sin"

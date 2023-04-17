@@ -12,18 +12,21 @@ type AsyncResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 #[tokio::main]
 async fn main() -> AsyncResult<()> {
     let ref web_url = env::var("WEB_URL").expect("Env WEB_URL is required");
-    // use fly internal network if on fly
-    let internal_url = match env::var("FLY_APP_NAME") {
-        Ok(app) => Some(match env::var("PORT") {
-            Ok(port) => format!("http://{}.internal:{}", app, port),
-            _ => format!("http://{}.internal", app),
-        }),
-        _ => None,
-    };
+
     let ref api_url = format!(
         "{}/prescriptions/expiring",
-        internal_url.as_ref().unwrap_or(web_url)
+        // use fly internal network if on fly
+        match env::var("FLY_APP_NAME") {
+            Ok(app) => Some(match env::var("PORT") {
+                Ok(port) => format!("http://{}.internal:{}", app, port),
+                _ => format!("http://{}.internal", app),
+            }),
+            _ => None,
+        }
+        .as_ref()
+        .unwrap_or(web_url)
     );
+
     let chat_id = ChatId(
         (env::var("TG_CHAT_ID").expect("Env TG_CHAT_ID is required"))
             .parse()

@@ -9,7 +9,7 @@ use tokio::time::{sleep, Duration};
 
 type AsyncResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> AsyncResult<()> {
     let ref web_url = env::var("WEB_URL").expect("Env WEB_URL is required");
 

@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1
 # base node image
-FROM node:lts-alpine3.17 as base
+FROM node:lts-alpine as base
 
 # Install openssl for Prisma
 RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add openssl libc6-compat sqlite xz
-RUN --mount=type=cache,id=node,target=/root/.node corepack enable && corepack prepare pnpm@7.25.0 --activate
+RUN corepack enable && corepack prepare pnpm@7.32.2 --activate
 
 ENV NODE_ENV production
 ENV CI 1
@@ -31,9 +31,9 @@ COPY --link . .
 RUN pnpm build
 
 # build the cenph-reminder rust worker service
-FROM rust:alpine3.17 as rust-builder
+FROM rust:alpine as rust-builder
 
-RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add openssl openssl-dev musl-dev
+RUN --mount=type=cache,id=apk,target=/var/cache/apk apk upgrade && apk add openssl-dev musl-dev
 
 RUN mkdir /app
 WORKDIR /app
@@ -48,7 +48,6 @@ FROM base
 
 RUN mkdir /app
 WORKDIR /app
-
 
 COPY --link --from=production-deps /app/node_modules /app/node_modules
 COPY --link --from=build /app/build /app/build

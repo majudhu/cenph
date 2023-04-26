@@ -2,7 +2,7 @@
 
 ## Required env variables
 
-- `API_URL`
+- `WEB_URL`
 - `API_KEY`
 - `TELOXIDE_TOKEN`
 - `TG_CHAT_ID`
@@ -12,7 +12,7 @@
 create a dev.sh, fill and source `. ./dev.sh`
 
 ```sh
-export API_URL=""
+export WEB_URL=""
 export API_KEY=""
 export TELOXIDE_TOKEN=""
 export TG_CHAT_ID=""

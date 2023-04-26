@@ -1,8 +1,5 @@
 /target
-
-/dev.sh
-
 fly.toml
 *.log
 .DS_Store
-.dev.sh
+.env

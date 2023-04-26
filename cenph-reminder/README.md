@@ -2,18 +2,7 @@
 
 ## Required env variables
 
-- `WEB_URL`
-- `API_KEY`
-- `TELOXIDE_TOKEN`
-- `TG_CHAT_ID`
-
-## Development
-
-create a dev.sh, fill and source `. ./dev.sh`
-
-```sh
-export WEB_URL=""
-export API_KEY=""
-export TELOXIDE_TOKEN=""
-export TG_CHAT_ID=""
-```
+- `WEB_URL`: public website url
+- `API_KEY`: same as website's
+- `TELOXIDE_TOKEN`: telegram bot access token from @MyChatInfoBot
+- `TG_CHAT_ID`: channel chat id from @MyChatInfoBot

@@ -11,6 +11,9 @@ type AsyncResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> AsyncResult<()> {
+    #[cfg(debug_assertions)] // load .env only in debug profile
+    dotenvy::dotenv().ok();
+
     let ref web_url = env::var("WEB_URL").expect("Env WEB_URL is required");
 
     let ref api_url = format!(
